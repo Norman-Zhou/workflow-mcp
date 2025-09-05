@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"workflow": {
+			"type": "stdio",
+			"command": "npm",
+			"args": [
+				"run",
+				"start",
+			]
+		}
+	},
+	"inputs": []
+}
