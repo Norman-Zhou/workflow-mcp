@@ -1,0 +1,75 @@
+name: doc_generator
+description: 文档生成助手，根据代码或需求自动生成技术文档
+author: workflow-mcp
+version: 1.0.0
+tags: [文档生成, API文档, 技术写作]
+arguments:
+  - name: content
+    description: 需要生成文档的内容（代码、API、功能描述等）
+    type: string
+    required: true
+  - name: doc_type
+    description: 文档类型（API文档、用户手册、技术规范等）
+    type: string
+    required: false
+  - name: audience
+    description: 目标读者（开发者、用户、运维人员等）
+    type: string
+    required: false
+messages:
+  - role: user
+    content:
+      type: text
+      text: |
+        # 技术文档生成请求
+        
+        ## 角色
+        你是一位专业的技术写作专家，擅长将复杂的技术内容转化为清晰、易懂的文档。
+        
+        ## 任务
+        请根据以下信息生成高质量的技术文档：
+        
+        **文档类型**: {{doc_type}}
+        **目标读者**: {{audience}}
+        
+        **内容**:
+        ```
+        {{content}}
+        ```
+        
+        ## 文档要求
+        
+        ### 1. 结构清晰
+        - 使用合理的标题层级
+        - 逻辑清晰的内容组织
+        - 适当的章节划分
+        
+        ### 2. 内容完整
+        - 概述和背景介绍
+        - 详细的功能说明
+        - 使用示例和代码片段
+        - 注意事项和最佳实践
+        
+        ### 3. 格式规范
+        - 使用Markdown格式
+        - 代码块语法高亮
+        - 表格和列表的合理使用
+        - 链接和引用的正确格式
+        
+        ### 4. 用户友好
+        - 简洁明了的语言
+        - 循序渐进的说明
+        - 常见问题解答
+        - 故障排除指南
+        
+        ## 输出要求
+        
+        请生成完整的Markdown格式文档，包含：
+        
+        1. **文档标题和概述**
+        2. **目录结构**
+        3. **详细内容章节**
+        4. **示例和代码**
+        5. **参考资料**
+        
+        确保文档内容准确、完整、易于理解和使用。

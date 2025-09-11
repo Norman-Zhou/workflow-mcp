@@ -9,6 +9,7 @@ import { workflowCreate } from "./tools/workflow-create.js";
 import { workflowDefine } from "./tools/workflow-define.js";
 import { workflowRun } from "./tools/workflow-run.js";
 import { workflowSave } from "./tools/workflow-save.js";
+import { registerPromptTools } from "./tools/prompt-manager.js";
 
 
 function expandTildePath(path: string): string {
@@ -37,6 +38,7 @@ async function registerTools(server: McpServer, projectPath: string) {
   workflowCreate(server, projectPath);
   workflowSave(server, projectPath);
   workflowRun(server, projectPath);
+  registerPromptTools(server, projectPath);
 }
 
 
