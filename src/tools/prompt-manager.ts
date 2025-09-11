@@ -94,77 +94,121 @@ export class PromptManager {
   private parseYaml(content: string): Prompt {
     const lines = content.split('\n');
     const result: any = {};
-    let currentKey = '';
-    let currentObject: any = result;
-    let indentStack: any[] = [result];
-    let keyStack: string[] = [''];
+    const stack: { obj: any; key?: string; indent: number }[] = [{ obj: result, indent: -1 }];
+    let multilineKey: string | null = null;
+    let multilineContent: string[] = [];
+    let multilineIndent = 0;
 
-    for (let line of lines) {
-      line = line.replace(/\r$/, '');
-      if (line.trim() === '' || line.trim().startsWith('#')) continue;
-
-      const indent = line.length - line.trimLeft().length;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       const trimmedLine = line.trim();
-
-      // 处理缩进变化
-      while (indentStack.length > 1 && indent <= (keyStack.length - 1) * 2) {
-        indentStack.pop();
-        keyStack.pop();
-        currentObject = indentStack[indentStack.length - 1];
+      
+      if (!trimmedLine || trimmedLine.startsWith('#')) {
+        continue;
       }
 
-      if (trimmedLine.includes(':')) {
+      const indent = line.length - line.trimStart().length;
+      
+      // 处理多行文本
+      if (multilineKey) {
+        if (indent > multilineIndent || trimmedLine === '') {
+          multilineContent.push(line.substring(multilineIndent));
+          continue;
+        } else {
+          // 多行文本结束
+          const currentContext = stack[stack.length - 1];
+          currentContext.obj[multilineKey] = multilineContent.join('\n').trim();
+          multilineKey = null;
+          multilineContent = [];
+        }
+      }
+
+      // 处理缩进变化 - 回退到合适的层级
+      while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+        stack.pop();
+      }
+
+      const currentContext = stack[stack.length - 1];
+
+      if (trimmedLine.startsWith('- ')) {
+         // 数组项
+         const itemValue = trimmedLine.substring(2).trim();
+         
+         // 确保当前上下文是数组
+         if (!Array.isArray(currentContext.obj)) {
+           // 如果有key，说明需要在父对象中创建数组
+           if (currentContext.key) {
+             const parentContext = stack[stack.length - 2];
+             parentContext.obj[currentContext.key] = [];
+             currentContext.obj = parentContext.obj[currentContext.key];
+           } else {
+             // 直接转换为数组
+             const keys = Object.keys(currentContext.obj);
+             if (keys.length === 0) {
+               // 空对象，直接替换为数组
+               const parentContext = stack[stack.length - 2];
+               if (parentContext && currentContext.key) {
+                 parentContext.obj[currentContext.key] = [];
+                 currentContext.obj = parentContext.obj[currentContext.key];
+               }
+             }
+           }
+         }
+
+         if (itemValue.includes(':')) {
+            // 对象数组项
+            const item = {};
+            const [key, ...valueParts] = itemValue.split(':');
+            const value = valueParts.join(':').trim();
+            
+            if (value === '' || value === '|') {
+              if (value === '|') {
+                // 多行文本
+                multilineKey = key;
+                multilineContent = [];
+                multilineIndent = indent + 2;
+                (item as any)[key] = '';
+              } else {
+                // 嵌套对象
+                (item as any)[key] = {};
+                // 将item推入栈，以便后续处理其嵌套属性
+                stack.push({ obj: item, indent });
+              }
+            } else {
+              (item as any)[key] = this.parseValue(value);
+            }
+            currentContext.obj.push(item);
+         } else {
+           // 简单数组项
+           currentContext.obj.push(this.parseValue(itemValue));
+         }
+      } else if (trimmedLine.includes(':')) {
+        // 键值对
         const [key, ...valueParts] = trimmedLine.split(':');
         const value = valueParts.join(':').trim();
-
+        
         if (value === '' || value === '|') {
-          // 对象或多行字符串开始
-          if (key === 'text' && value === '|') {
+          if (value === '|') {
             // 多行文本
-            currentObject[key] = '';
-            currentKey = key;
+            multilineKey = key;
+            multilineContent = [];
+            multilineIndent = indent + 2;
+            currentContext.obj[key] = '';
           } else {
-            // 新对象
-            currentObject[key] = {};
-            indentStack.push(currentObject[key]);
-            keyStack.push(key);
-            currentObject = currentObject[key];
+            // 嵌套对象或数组（待定）
+            currentContext.obj[key] = {};
+            stack.push({ obj: currentContext.obj[key], key, indent });
           }
         } else {
-          // 简单值
-          currentObject[key] = this.parseValue(value);
-        }
-      } else if (trimmedLine.startsWith('- ')) {
-        // 数组项
-        const parentKey = keyStack[keyStack.length - 1];
-        if (!Array.isArray(currentObject)) {
-          const parent = indentStack[indentStack.length - 2];
-          parent[parentKey] = [];
-          currentObject = parent[parentKey];
-        }
-
-        const itemValue = trimmedLine.substring(2).trim();
-        if (itemValue.includes(':')) {
-          const item = {};
-          const [key, ...valueParts] = itemValue.split(':');
-          const value = valueParts.join(':').trim();
-          (item as any)[key] = this.parseValue(value);
-          currentObject.push(item);
-        } else {
-          currentObject.push(this.parseValue(itemValue));
-        }
-      } else if (currentKey === 'text') {
-        // 多行文本内容
-        const textIndent = line.length - line.trimLeft().length;
-        if (textIndent > 0) {
-          const parent = indentStack[indentStack.length - 2];
-          if (parent[currentKey]) {
-            parent[currentKey] += '\n' + line.substring(Math.min(textIndent, 8));
-          } else {
-            parent[currentKey] = line.substring(Math.min(textIndent, 8));
-          }
+          currentContext.obj[key] = this.parseValue(value);
         }
       }
+    }
+
+    // 处理未完成的多行文本
+    if (multilineKey && multilineContent.length > 0) {
+      const currentContext = stack[stack.length - 1];
+      currentContext.obj[multilineKey] = multilineContent.join('\n').trim();
     }
 
     return result as Prompt;
@@ -282,6 +326,15 @@ export class PromptManager {
 
     try {
       let promptText = '';
+
+      // 确保messages是数组
+      if (!prompt.messages || !Array.isArray(prompt.messages)) {
+        return {
+          success: false,
+          error: `Invalid messages format in prompt '${name}': expected array, got ${typeof prompt.messages}`,
+          usedArguments: args
+        };
+      }
 
       // 处理用户消息
       const userMessages = prompt.messages.filter(msg => msg.role === 'user');
