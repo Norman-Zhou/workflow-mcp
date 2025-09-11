@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { server } from '../server.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { join, extname, dirname } from 'path';
 import { z } from 'zod';
@@ -52,7 +52,10 @@ export class PromptManager {
           }
 
           if (!prompt.name) {
-            console.warn(`Warning: Prompt in ${file} is missing a name field. Skipping.`);
+            await server.sendLoggingMessage({
+              level: "warning",
+              data: `Warning: Prompt in ${file} is missing a name field. Skipping.`
+            });
             continue;
           }
 
@@ -64,14 +67,23 @@ export class PromptManager {
           this.loadedPrompts.set(prompt.name, prompt);
           prompts.push(prompt);
         } catch (error) {
-          console.error(`Error loading prompt from ${file}:`, error);
+          await server.sendLoggingMessage({
+            level: "error",
+            data: `Error loading prompt from ${file}: ${error instanceof Error ? error.message : String(error)}`
+          });
         }
       }
 
-      console.log(`Loaded ${prompts.length} prompts from ${this.promptsDir}`);
+      await server.sendLoggingMessage({
+        level: "info",
+        data: `Loaded ${prompts.length} prompts from ${this.promptsDir}`
+      });
       return prompts;
     } catch (error) {
-      console.error('Error loading prompts:', error);
+      await server.sendLoggingMessage({
+        level: "error",
+        data: `Error loading prompts: ${error instanceof Error ? error.message : String(error)}`
+      });
       return [];
     }
   }
@@ -305,7 +317,7 @@ export class PromptManager {
 /**
  * 注册prompt管理相关的工具
  */
-export function registerPromptTools(server: McpServer, projectPath: string) {
+export function registerPromptTools(projectPath: string) {
   const promptManager = new PromptManager(projectPath);
 
   // 加载prompts
@@ -367,9 +379,10 @@ export function registerPromptTools(server: McpServer, projectPath: string) {
         };
       }
 
-      const argsList = prompt.arguments?.map(arg =>
-        `- ${arg.name} (${arg.type || 'string'}): ${arg.description || '无描述'}`
-      ).join('\n') || '无参数';
+      const argsList = Array.isArray(prompt.arguments)
+        ? prompt.arguments.map(arg =>
+          `- ${arg.name} (${arg.type || 'string'}): ${arg.description || '无描述'}`
+        ).join('\n') : '无参数';
 
       return {
         content: [

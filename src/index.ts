@@ -1,9 +1,7 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { homedir } from 'os';
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { server } from './server.js';
+
 import { validateProjectPath } from './path-utils.js';
 import { workflowCreate } from "./tools/workflow-create.js";
 import { workflowDefine } from "./tools/workflow-define.js";
@@ -19,26 +17,16 @@ function expandTildePath(path: string): string {
   return path;
 }
 
-// Get version from package.json
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = join(__dirname, '..', 'package.json');
-const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
 
-// MCP server
-const server = new McpServer({
-  name: 'workflow-mcp',
-  version: packageJson.version
-});
-
-async function registerTools(server: McpServer, projectPath: string) {
+async function registerTools(projectPath: string) {
   // Validate project path
   await validateProjectPath(projectPath);
-  workflowDefine(server);
-  workflowCreate(server, projectPath);
-  workflowSave(server, projectPath);
-  workflowRun(server, projectPath);
-  registerPromptTools(server, projectPath);
+  workflowDefine();
+  workflowCreate(projectPath);
+  workflowSave(projectPath);
+  workflowRun(projectPath);
+  registerPromptTools(projectPath);
 }
 
 
@@ -49,7 +37,7 @@ async function main() {
     const projectPath = expandTildePath(args[0] || process.cwd());
 
     // Register tools
-    await registerTools(server, projectPath);
+    await registerTools(projectPath);
 
     // Connect to stdio transport
     const transport = new StdioServerTransport();

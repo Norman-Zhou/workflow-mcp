@@ -1,8 +1,8 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { server } from '../server.js';
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-export function workflowDefine(server: McpServer) {
+export function workflowDefine() {
     server.tool(
         'workflow-define',
         'Provides definitions for creating a workflow',

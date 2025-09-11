@@ -1,9 +1,9 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { server } from '../server.js';
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { writeFile } from "fs/promises";
 import { z } from "zod";
 
-export function workflowSave(server: McpServer, projectPath: string) {
+export function workflowSave(projectPath: string) {
     server.tool(
         "workflow-save",
         "Saves a workflow definition to the project directory.",

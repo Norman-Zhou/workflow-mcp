@@ -1,8 +1,8 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { server } from '../server.js';
 import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-export function workflowCreate(server: McpServer, projectPath: string) {
+export function workflowCreate(projectPath: string) {
     server.prompt(
         'workflow-create',
         'Summarize the context and save the workflow definition in Json format.',

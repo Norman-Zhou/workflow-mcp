@@ -1,9 +1,9 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { server } from '../server.js';
 import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { readFile } from "fs/promises";
 import { z } from "zod";
 
-export function workflowRun(server: McpServer, projectPath: string) {
+export function workflowRun(projectPath: string) {
     server.prompt(
         "workflow-run",
         "Run a step in a workflow. Tip: Use this tool recursively to run all steps in a workflow.",
