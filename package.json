@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "start": "npm run build && node dist/index.js",
+    "start": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
     "clean": "rimraf dist"
   },
   "keywords": [],
@@ -19,8 +19,9 @@
     "@modelcontextprotocol/sdk": "^1.17.5"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.16.6",
     "@types/node": "^24.3.1",
-    "typescript": "^5.9.2",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.2"
   }
 }

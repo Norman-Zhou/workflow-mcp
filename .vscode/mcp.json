@@ -2,12 +2,11 @@
 	"servers": {
 		"workflow": {
 			"type": "stdio",
-			"command": "npm",
+			"command": "node",
 			"args": [
-				"run",
-				"start",
+				"dist/index.js"
 			]
-		}
+		},
 	},
 	"inputs": []
 }

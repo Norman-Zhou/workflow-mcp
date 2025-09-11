@@ -5,7 +5,10 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { validateProjectPath } from './path-utils.js';
-import { workflowGuideTool } from "./tools/workflow-guide.js";
+import { workflowCreate } from "./tools/workflow-create.js";
+import { workflowDefine } from "./tools/workflow-define.js";
+import { workflowRun } from "./tools/workflow-run.js";
+import { workflowSave } from "./tools/workflow-save.js";
 
 
 function expandTildePath(path: string): string {
@@ -30,8 +33,10 @@ const server = new McpServer({
 async function registerTools(server: McpServer, projectPath: string) {
   // Validate project path
   await validateProjectPath(projectPath);
-  console.log(`Using project path: ${projectPath}`);
-  workflowGuideTool(server, projectPath);
+  workflowDefine(server);
+  workflowCreate(server, projectPath);
+  workflowSave(server, projectPath);
+  workflowRun(server, projectPath);
 }
 
 
@@ -48,10 +53,11 @@ async function main() {
     const transport = new StdioServerTransport();
 
     await server.connect(transport);
-    console.error("Workflow MCP Server running on stdio");
+    await server.sendLoggingMessage({
+      level: "info",
+      data: `Workflow MCP Server initialized with project path: ${projectPath}`
+    });
     // MCP server initialized successfully
-
-
 
     process.on('SIGINT', () => {
       server.close();
@@ -62,7 +68,10 @@ async function main() {
       process.exit(0);
     });
   } catch (error: any) {
-    console.error('Error:', error.message);
+    await server.sendLoggingMessage({
+      level: "info",
+      data: `Error in Workflow MCP Server: ${error.message}`
+    });
     process.exit(1);
   }
 

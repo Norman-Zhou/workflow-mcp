@@ -10,13 +10,6 @@ export async function ensureDirectoryExists(dirPath: string): Promise<void> {
     }
 }
 
-export async function touchFile(path: string): Promise<void> {
-    const time = new Date();
-    await import('fs/promises').then(fs =>
-        fs.writeFile(path, 'success at ' + time.toString(), { encoding: 'utf8' })
-    );
-}
-
 export async function validateProjectPath(projectPath: string): Promise<string> {
     try {
         // Resolve to absolute path

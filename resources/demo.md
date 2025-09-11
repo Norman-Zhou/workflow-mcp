@@ -1,0 +1,1 @@
+I want to create a workflow named 'workflow-demo'. It contains 3 steps, first take a input keyword and generates 5 related querys, then use the tool web-search to fetch contents base on the query, then summerize the contents into simplified words to describe the concept of the keyword
